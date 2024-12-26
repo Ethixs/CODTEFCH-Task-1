@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quify - Your AI Assistant</title>
+    <style>
+        /* CSS STYLES */
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(to right, #6a11cb, #2575fc);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            color: #fff;
+        }
+
+        .container {
+            text-align: center;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+            width: 400px;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        p {
+            font-size: 1rem;
+            margin: 5px 0;
+        }
+
+        .mic-container {
+            margin: 20px 0;
+        }
+
+        #mic-btn {
+            background: #2575fc;
+            border: none;
+            border-radius: 50%;
+            padding: 15px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        #mic-btn:hover {
+            background: #6a11cb;
+        }
+
+        #mic-icon {
+            width: 50px;
+            height: 50px;
+        }
+
+        #response-container {
+            margin-top: 20px;
+            text-align: left;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.3);
+        }
+
+        #response-container h3 {
+            margin: 0;
+            color: #00ff00;
+            font-size: 1.2rem;
+        }
+
+        #response {
+            margin: 10px 0 0;
+            font-size: 1rem;
+            color: #fff;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Quify</h1>
+        <p>Your AI Assistant</p>
+        <div class="mic-container">
+            <button id="mic-btn">
+                <img src="https://i.ibb.co/0VGRmNj/mike.png" alt="Mic Icon" id="mic-icon">
+            </button>
+            <p id="status">Press and hold the mic button to ask your question.</p>
+        </div>
+        <div id="response-container">
+            <h3>Response:</h3>
+            <p id="response">Awaiting your command...</p>
+        </div>
+    </div>
+
+    <script>
+        // JavaScript for Voice Recognition and Backend Integration
+        const micBtn = document.getElementById('mic-btn');
+        const responseContainer = document.getElementById('response');
+        const status = document.getElementById('status');
+
+        // Set up Speech Recognition
+        window.SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        const recognition = new SpeechRecognition();
+        recognition.lang = 'en-US';
+        recognition.interimResults = false;
+
+        micBtn.addEventListener('mousedown', () => {
+            recognition.start();
+            status.textContent = "Listening...";
+            micBtn.style.background = "#6a11cb";
+        });
+
+        micBtn.addEventListener('mouseup', () => {
+            recognition.stop();
+            status.textContent = "Processing...";
+            micBtn.style.background = "#2575fc";
+        });
+
+        recognition.addEventListener('result', (event) => {
+            const transcript = Array.from(event.results)
+                .map(result => result[0])
+                .map(result => result.transcript)
+                .join('');
+            status.textContent = "Processing your command...";
+            sendCommand(transcript);
+        });
+
+        recognition.addEventListener('error', (event) => {
+            status.textContent = "Error in recognition. Please try again.";
+            console.error(event.error);
+        });
+
+        function sendCommand(command) {
+            fetch('/process', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `command=${encodeURIComponent(command)}`,
+            })
+            .then(response => response.json())
+            .then(data => {
+                responseContainer.textContent = data.response;
+                status.textContent = "Press and hold the mic button to ask your question.";
+            })
+            .catch(error => {
+                responseContainer.textContent = "Error in processing your command.";
+                console.error('Error:', error);
+            });
+        }
+    </script>
+</body>
+</html>
